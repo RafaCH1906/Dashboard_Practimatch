@@ -1,0 +1,50 @@
+# Test PractiMatch Waitlist API
+### Root endpoint
+### Health check
+GET http://127.0.0.1:8000/api/health
+### Register new user in waitlist (Student)
+POST http://127.0.0.1:8000/api/waitlist
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "user_type": "student",
+  "product_of_interest": "PractiMatch Platform",
+  "source": "Instagram",
+  "country": "Mexico"
+}
+
+### Register duplicate email (should increment counter)
+POST http://127.0.0.1:8000/api/waitlist
+Content-Type: application/json
+
+{
+  "email": "student@example.com",
+  "user_type": "student",
+  "product_of_interest": "PractiMatch Platform",
+  "source": "Facebook",
+  "country": "Mexico"
+}
+
+### Register company
+POST http://127.0.0.1:8000/api/waitlist
+Content-Type: application/json
+
+{
+  "email": "company@example.com",
+  "user_type": "company",
+  "product_of_interest": "Recruitment Tool",
+  "source": "Direct"
+}
+
+### Register university (without optional fields)
+POST http://127.0.0.1:8000/api/waitlist
+Content-Type: application/json
+
+{
+  "email": "university@example.com",
+  "user_type": "university",
+  "product_of_interest": "Academic Partnership"
+
+}
+
