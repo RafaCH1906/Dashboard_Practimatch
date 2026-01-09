@@ -6,20 +6,15 @@ import logging
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
-
 from app.models.waitlist import Waitlist
 from app.schemas.admin import (
     MetricsByCategory,
     TopEmail,
     LatestByType
 )
-
 logger = logging.getLogger(__name__)
-
-
 class AdminService:
     """Servicio para operaciones del dashboard administrativo"""
-
     @staticmethod
     def get_waitlist_paginated(
         db: Session,
@@ -34,7 +29,6 @@ class AdminService:
     ) -> Tuple[List[Waitlist], int]:
         """
         Obtiene lista paginada de waitlist con filtros
-
         Args:
             page: Número de página (1-indexed)
             limit: Registros por página (max 100)
@@ -44,48 +38,34 @@ class AdminService:
             country: Filtro por país
             email: Búsqueda parcial por email
             order_by: Ordenamiento (created_at_desc | registration_count_desc)
-
         Returns:
             Tuple con (lista de registros, total de registros)
         """
-        # Límite máximo
-        limit = min(limit, 100)
-
         # Query base
         query = db.query(Waitlist)
-
         # Aplicar filtros
         if user_type:
             query = query.filter(Waitlist.user_type == user_type)
-
         if product_of_interest:
             query = query.filter(Waitlist.product_of_interest.ilike(f"%{product_of_interest}%"))
-
         if source:
             query = query.filter(Waitlist.source.ilike(f"%{source}%"))
-
         if country:
             query = query.filter(Waitlist.country.ilike(f"%{country}%"))
-
         if email:
             query = query.filter(Waitlist.email.ilike(f"%{email}%"))
-
         # Total antes de paginar
         total = query.count()
-
         # Ordenamiento
         if order_by == "registration_count_desc":
             query = query.order_by(desc(Waitlist.registration_count))
         else:  # created_at_desc por defecto
             query = query.order_by(desc(Waitlist.created_at))
-
         # Paginación
         offset = (page - 1) * limit
         items = query.offset(offset).limit(limit).all()
-
         logger.info(f"Fetched {len(items)} waitlist items (page {page}, total {total})")
         return items, total
-
     @staticmethod
     def get_metrics_by_user_type(db: Session) -> List[MetricsByCategory]:
         """Obtiene cantidad de registros por tipo de usuario"""
@@ -98,12 +78,10 @@ class AdminService:
             .order_by(desc("count"))
             .all()
         )
-
         return [
             MetricsByCategory(category=str(r.category), count=r.count)
             for r in results
         ]
-
     @staticmethod
     def get_metrics_by_source(db: Session) -> List[MetricsByCategory]:
         """Obtiene cantidad de registros por fuente de tráfico"""
@@ -116,12 +94,10 @@ class AdminService:
             .order_by(desc("count"))
             .all()
         )
-
         return [
             MetricsByCategory(category=r.category, count=r.count)
             for r in results
         ]
-
     @staticmethod
     def get_metrics_by_country(db: Session) -> List[MetricsByCategory]:
         """Obtiene cantidad de registros por país"""
@@ -135,12 +111,10 @@ class AdminService:
             .limit(10)  # Top 10 países
             .all()
         )
-
         return [
             MetricsByCategory(category=r.category, count=r.count)
             for r in results
         ]
-
     @staticmethod
     def get_top_emails(db: Session, limit: int = 10) -> List[TopEmail]:
         """Obtiene los emails con más intentos de registro"""
@@ -154,12 +128,10 @@ class AdminService:
             .limit(limit)
             .all()
         )
-
         return [
             TopEmail(email=r.email, registration_count=r.registration_count)
             for r in results
         ]
-
     @staticmethod
     def get_latest_by_type(db: Session) -> List[LatestByType]:
         """Obtiene el último registro de cada tipo de usuario"""
@@ -172,7 +144,6 @@ class AdminService:
             .group_by(Waitlist.user_type)
             .subquery()
         )
-
         results = (
             db.query(Waitlist)
             .join(
@@ -182,7 +153,6 @@ class AdminService:
             )
             .all()
         )
-
         return [
             LatestByType(
                 user_type=str(r.user_type),
@@ -192,10 +162,8 @@ class AdminService:
             )
             for r in results
         ]
-
     @staticmethod
     def get_total_attempts(db: Session) -> int:
         """Obtiene el total de intentos de registro (suma de registration_count)"""
         result = db.query(func.sum(Waitlist.registration_count)).scalar()
         return result or 0
-
