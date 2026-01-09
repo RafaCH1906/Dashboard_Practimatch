@@ -10,7 +10,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.db.database import init_db
-from app.api.routes import health, waitlist
+from app.api.routes import health, waitlist, admin, auth
 
 # Configurar rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -52,8 +52,10 @@ async def startup_event():
 
 
 # Registrar rutas con prefijo /api
-app.include_router(health.router, prefix="/api")
-app.include_router(waitlist.router, prefix="/api")
+app.include_router(health.router, prefix="/api", tags=["Health"])
+app.include_router(waitlist.router, prefix="/api", tags=["Waitlist"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 
 # Root endpoint (opcional, para verificación rápida)

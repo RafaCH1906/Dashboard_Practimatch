@@ -1,7 +1,15 @@
 # Test PractiMatch Waitlist API
+
+### ========================================
+### STEP 1: PUBLIC ENDPOINTS
+### ========================================
+
 ### Root endpoint
+GET http://127.0.0.1:8000/
+
 ### Health check
 GET http://127.0.0.1:8000/api/health
+
 ### Register new user in waitlist (Student)
 POST http://127.0.0.1:8000/api/waitlist
 Content-Type: application/json
@@ -45,6 +53,52 @@ Content-Type: application/json
   "email": "university@example.com",
   "user_type": "university",
   "product_of_interest": "Academic Partnership"
-
 }
 
+### ========================================
+### STEP 2: ADMIN ENDPOINTS
+### ========================================
+
+### 1. Login como admin
+POST http://127.0.0.1:8000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@practimatch.com",
+  "password": "your-secure-password"
+}
+
+### 2. Get current admin info (usar token del paso anterior)
+GET http://127.0.0.1:8000/api/auth/me
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 3. Get waitlist (primera página)
+GET http://127.0.0.1:8000/api/admin/waitlist?page=1&limit=20
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 4. Get waitlist filtrado por tipo
+GET http://127.0.0.1:8000/api/admin/waitlist?page=1&limit=10&user_type=student
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 5. Get waitlist por fuente
+GET http://127.0.0.1:8000/api/admin/waitlist?page=1&limit=10&source=Instagram
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 6. Buscar por email
+GET http://127.0.0.1:8000/api/admin/waitlist?page=1&limit=10&email=student
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 7. Ordenar por registration_count
+GET http://127.0.0.1:8000/api/admin/waitlist?page=1&limit=10&order_by=registration_count_desc
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 8. Get metrics
+GET http://127.0.0.1:8000/api/admin/metrics
+Authorization: Bearer <COPIAR_TOKEN_AQUI>
+
+### 9. Test sin autenticación (debe fallar 401)
+GET http://127.0.0.1:8000/api/admin/waitlist
+
+### 10. Test con token inválido (debe fallar 401)
+GET http://127.0.0.1:8000/api/admin/waitlist
+Authorization: Bearer invalid_token_here
