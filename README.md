@@ -9,7 +9,7 @@
 
 **Backend API para gestión de waitlist pública con dashboard administrativo**
 
-[Características](#-características) • [Instalación](#-instalación) • [Uso](#-uso) • [Documentación](#-documentación) • [API](#-api-endpoints)
+[Características](#-características) • [Instalación](#-instalación) • [Uso](#-uso) • [🚀 Deployment](#-deployment) • [Documentación](#-documentación) • [API](#-api-endpoints)
 
 </div>
 
