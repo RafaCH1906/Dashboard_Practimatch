@@ -2,9 +2,14 @@
 Script para crear el primer usuario administrador
 Ejecutar: python create_admin.py
 """
+import os
+from dotenv import load_dotenv
 from app.db.database import SessionLocal
 from app.services.auth_service import AuthService
 from app.models.admin_user import AdminUser
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 
 def create_first_admin():
@@ -20,8 +25,6 @@ def create_first_admin():
             return
 
         # Crear admin por defecto
-        # TODO: En producción, leer desde variables de entorno
-        import os
         email = os.getenv("ADMIN_EMAIL")
         password = os.getenv("ADMIN_PASSWORD")
 
