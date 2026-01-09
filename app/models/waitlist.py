@@ -3,7 +3,7 @@ Modelo ORM para la tabla Waitlist
 Representa registros de usuarios en la waitlist
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum, Index
 from sqlalchemy.sql import func
 import enum
 
@@ -40,6 +40,13 @@ class Waitlist(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Índices compuestos para mejorar performance de queries
+    __table_args__ = (
+        Index('idx_waitlist_filters', 'user_type', 'created_at'),
+        Index('idx_waitlist_source', 'source'),
+        Index('idx_waitlist_country', 'country'),
+    )
 
     def __repr__(self):
         return f"<Waitlist(email={self.email}, user_type={self.user_type}, count={self.registration_count})>"

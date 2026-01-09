@@ -5,9 +5,11 @@ Dashboard, métricas y gestión de waitlist
 import logging
 import math
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.database import get_db
 from app.middleware.auth import get_current_admin
@@ -22,6 +24,7 @@ from app.schemas.admin import (
 )
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +34,9 @@ logger = logging.getLogger(__name__)
     tags=["Admin"],
     summary="Lista paginada de waitlist"
 )
+@limiter.limit("60/minute")  # Máximo 60 requests por minuto por IP
 async def get_waitlist(
+    request: Request,
     page: int = Query(1, ge=1, description="Número de página"),
     limit: int = Query(20, ge=1, le=100, description="Registros por página (máx 100)"),
     user_type: Optional[UserTypeFilter] = Query(None, description="Filtrar por tipo de usuario"),
@@ -106,7 +111,9 @@ async def get_waitlist(
     tags=["Admin"],
     summary="Métricas agregadas de waitlist"
 )
+@limiter.limit("30/minute")  # Máximo 30 requests por minuto por IP
 async def get_metrics(
+    request: Request,
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):

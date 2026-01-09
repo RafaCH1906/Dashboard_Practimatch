@@ -4,6 +4,7 @@ POST /api/waitlist: registro de usuarios en la waitlist
 """
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -21,6 +22,10 @@ logger = logging.getLogger(__name__)
     "/waitlist",
     response_model=WaitlistResponse,
     status_code=status.HTTP_201_CREATED,
+    responses={
+        200: {"description": "Email already registered, counter incremented"},
+        201: {"description": "New registration created"}
+    },
     tags=["Waitlist"]
 )
 @limiter.limit("10/minute")  # Máximo 10 registros por minuto por IP
@@ -68,14 +73,18 @@ async def register_waitlist(
                 "user_type": user_type_value,
                 "product_of_interest": waitlist.product_of_interest,
                 "registration_count": waitlist.registration_count,
-                "is_new_registration": is_new
+                "is_new_registration": is_new,
+                "created_at": waitlist.created_at.isoformat() if waitlist.created_at else None,
+                "updated_at": waitlist.updated_at.isoformat() if waitlist.updated_at else None
             }
         )
 
-        # Cambiar status code si es registro duplicado
+        # Retornar 200 para duplicados, 201 para nuevos
         if not is_new:
-            # Retornar 200 en lugar de 201 para duplicados
-            return response
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=response.model_dump()
+            )
 
         return response
 

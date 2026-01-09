@@ -67,15 +67,24 @@ class Settings(BaseSettings):
 
     @field_validator("SECRET_KEY")
     @classmethod
-    def validate_secret_key(cls, v: str) -> str:
+    def validate_secret_key(cls, v: str, info) -> str:
         """Valida que SECRET_KEY sea lo suficientemente seguro en producción"""
         if v == "your-secret-key-change-this-in-production":
-            # Solo advertir, no fallar (para desarrollo)
-            import warnings
-            warnings.warn(
-                "⚠️  Usando SECRET_KEY por defecto. CAMBIA ESTO EN PRODUCCIÓN!",
-                UserWarning
-            )
+            # Obtener el environment desde los valores ya parseados
+            env = info.data.get("ENVIRONMENT", "development")
+
+            if env == "production":
+                raise ValueError(
+                    "⚠️ CRITICAL: Cannot use default SECRET_KEY in production! "
+                    "Set a secure SECRET_KEY in environment variables."
+                )
+            else:
+                # Solo advertir en desarrollo
+                import warnings
+                warnings.warn(
+                    "⚠️  Usando SECRET_KEY por defecto. CAMBIA ESTO EN PRODUCCIÓN!",
+                    UserWarning
+                )
         return v
 
     def get_origins_list(self) -> List[str]:

@@ -89,3 +89,47 @@ async def get_current_user_info(
     """
     return admin
 
+
+@router.post(
+    "/refresh",
+    response_model=Token,
+    tags=["Auth"],
+    summary="Renovar token JWT"
+)
+async def refresh_token(
+    admin: AdminUser = Depends(get_current_admin)
+):
+    """
+    **Renueva el token JWT antes de expiración**
+
+    - Requiere token JWT válido actual
+    - Genera un nuevo token con tiempo completo de expiración
+    - Útil para mantener sesiones largas sin interrupciones
+
+    **Uso recomendado**:
+    - Frontend debe llamar este endpoint periódicamente (ej: cada 7 horas)
+    - O cuando detecte que el token está próximo a expirar
+
+    **Ejemplo**:
+    ```javascript
+    // Renovar token cada 7 horas
+    setInterval(async () => {
+        const newToken = await fetch('/api/auth/refresh', {
+            headers: { Authorization: `Bearer ${currentToken}` }
+        });
+    }, 7 * 60 * 60 * 1000);
+    ```
+    """
+    # Generar nuevo token con tiempo completo
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = AuthService.create_access_token(
+        data={"sub": admin.email, "user_id": admin.id},
+        expires_delta=access_token_expires
+    )
+
+    logger.info(f"Token refreshed for admin: {admin.email}")
+
+    return Token(access_token=access_token, token_type="bearer")
+
+
+
