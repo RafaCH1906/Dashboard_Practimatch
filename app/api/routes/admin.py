@@ -40,6 +40,10 @@ async def get_waitlist(
     source: Optional[str] = Query(None, description="Filtrar por fuente de tráfico"),
     country: Optional[str] = Query(None, description="Filtrar por país"),
     email: Optional[str] = Query(None, description="Búsqueda parcial por email"),
+    # Nuevos filtros de tracking
+    city: Optional[str] = Query(None, description="Filtrar por ciudad"),
+    device_type: Optional[str] = Query(None, description="Filtrar por dispositivo (mobile/desktop/tablet)"),
+    traffic_source: Optional[str] = Query(None, description="Filtrar por origen de tráfico"),
     order_by: str = Query("created_at_desc", regex="^(created_at_desc|registration_count_desc)$"),
     admin: AdminUser = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -56,6 +60,9 @@ async def get_waitlist(
     - `source`: fuente de tráfico (Instagram, Facebook, etc.)
     - `country`: país del usuario
     - `email`: búsqueda parcial por email
+    - `city`: ciudad del usuario (NUEVO)
+    - `device_type`: tipo de dispositivo (NUEVO)
+    - `traffic_source`: origen de tráfico inferido (NUEVO)
     **Ordenamiento:**
     - `created_at_desc`: Más recientes primero (default)
     - `registration_count_desc`: Más intentos primero
@@ -71,6 +78,10 @@ async def get_waitlist(
             source=source,
             country=country,
             email=email,
+            # Nuevos filtros
+            city=city,
+            device_type=device_type,
+            traffic_source=traffic_source,
             order_by=order_by
         )
         # Calcular total de páginas
@@ -124,6 +135,12 @@ async def get_metrics(
         by_user_type = AdminService.get_metrics_by_user_type(db)
         by_source = AdminService.get_metrics_by_source(db)
         by_country = AdminService.get_metrics_by_country(db)
+
+        # NUEVAS MÉTRICAS DE TRACKING
+        by_city = AdminService.get_metrics_by_city(db, limit=10)
+        by_device = AdminService.get_metrics_by_device(db)
+        by_traffic_source = AdminService.get_metrics_by_traffic_source(db, limit=10)
+
         top_emails = AdminService.get_top_emails(db, limit=10)
         latest_by_type = AdminService.get_latest_by_type(db)
         logger.info(f"Admin {admin.email} fetched metrics")
@@ -133,6 +150,10 @@ async def get_metrics(
             by_user_type=by_user_type,
             by_source=by_source,
             by_country=by_country,
+            # Nuevas métricas
+            by_city=by_city,
+            by_device=by_device,
+            by_traffic_source=by_traffic_source,
             top_emails=top_emails,
             latest_by_type=latest_by_type
         )

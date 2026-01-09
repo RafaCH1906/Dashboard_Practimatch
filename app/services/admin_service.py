@@ -25,6 +25,10 @@ class AdminService:
         source: Optional[str] = None,
         country: Optional[str] = None,
         email: Optional[str] = None,
+        # Nuevos filtros de tracking
+        city: Optional[str] = None,
+        device_type: Optional[str] = None,
+        traffic_source: Optional[str] = None,
         order_by: str = "created_at_desc"
     ) -> Tuple[List[Waitlist], int]:
         """
@@ -37,6 +41,9 @@ class AdminService:
             source: Filtro por fuente de tráfico
             country: Filtro por país
             email: Búsqueda parcial por email
+            city: Filtro por ciudad (nuevo)
+            device_type: Filtro por dispositivo (nuevo)
+            traffic_source: Filtro por origen de tráfico (nuevo)
             order_by: Ordenamiento (created_at_desc | registration_count_desc)
         Returns:
             Tuple con (lista de registros, total de registros)
@@ -54,6 +61,15 @@ class AdminService:
             query = query.filter(Waitlist.country.ilike(f"%{country}%"))
         if email:
             query = query.filter(Waitlist.email.ilike(f"%{email}%"))
+
+        # NUEVOS FILTROS DE TRACKING
+        if city:
+            query = query.filter(Waitlist.city.ilike(f"%{city}%"))
+        if device_type:
+            query = query.filter(Waitlist.device_type == device_type)
+        if traffic_source:
+            query = query.filter(Waitlist.traffic_source.ilike(f"%{traffic_source}%"))
+
         # Total antes de paginar
         total = query.count()
         # Ordenamiento
@@ -167,3 +183,61 @@ class AdminService:
         """Obtiene el total de intentos de registro (suma de registration_count)"""
         result = db.query(func.sum(Waitlist.registration_count)).scalar()
         return result or 0
+
+    # ========================================
+    # NUEVAS MÉTRICAS DE TRACKING
+    # ========================================
+
+    @staticmethod
+    def get_metrics_by_city(db: Session, limit: int = 10) -> List[MetricsByCategory]:
+        """Obtiene cantidad de registros por ciudad (Top 10)"""
+        results = (
+            db.query(
+                func.coalesce(Waitlist.city, "Unknown").label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .group_by("category")
+            .order_by(desc("count"))
+            .limit(limit)
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]
+
+    @staticmethod
+    def get_metrics_by_device(db: Session) -> List[MetricsByCategory]:
+        """Obtiene cantidad de registros por tipo de dispositivo"""
+        results = (
+            db.query(
+                func.coalesce(Waitlist.device_type, "unknown").label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .group_by("category")
+            .order_by(desc("count"))
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]
+
+    @staticmethod
+    def get_metrics_by_traffic_source(db: Session, limit: int = 10) -> List[MetricsByCategory]:
+        """Obtiene cantidad de registros por fuente de tráfico (Top 10)"""
+        results = (
+            db.query(
+                func.coalesce(Waitlist.traffic_source, "unknown").label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .group_by("category")
+            .order_by(desc("count"))
+            .limit(limit)
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]
+

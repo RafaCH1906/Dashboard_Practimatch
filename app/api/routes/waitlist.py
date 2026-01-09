@@ -12,6 +12,7 @@ from slowapi.util import get_remote_address
 from app.db.database import get_db
 from app.schemas.waitlist import WaitlistCreate, WaitlistResponse
 from app.services.waitlist_service import WaitlistService
+from app.utils.tracking import DeviceDetector, GeoLocationService, TrafficSourceDetector
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -41,6 +42,11 @@ async def register_waitlist(
     - Si el email es nuevo: crea registro con count=1, retorna 201
     - Si el email existe: incrementa count, retorna 200
 
+    **Tracking automático (NO requiere envío desde frontend):**
+    - Dispositivo: Detectado desde User-Agent
+    - Ciudad/País: Detectado desde IP (geolocalización)
+    - Origen: Detectado desde Referer
+
     **Validaciones:**
     - Email válido (validado por Pydantic)
     - User type debe ser: student | company | university
@@ -50,12 +56,47 @@ async def register_waitlist(
         # Log del intento de registro
         logger.info(f"Waitlist registration attempt: {waitlist_data.email}")
 
-        # Crear o incrementar contador
-        waitlist, is_new = WaitlistService.create_or_increment(db, waitlist_data)
+        # ========================================
+        # TRACKING AUTOMÁTICO
+        # ========================================
+
+        # 1. Detectar dispositivo desde User-Agent
+        user_agent = request.headers.get("User-Agent", "")
+        device_type = DeviceDetector.detect(user_agent)
+
+        # 2. Obtener IP real y geolocalizar
+        client_ip = GeoLocationService.get_client_ip(request)
+        geo_data = await GeoLocationService.get_location(client_ip) if client_ip else {"country": None, "city": None}
+
+        # 3. Detectar origen de tráfico
+        referer = request.headers.get("Referer") or request.headers.get("Referrer")
+        traffic_source = TrafficSourceDetector.detect(referer, waitlist_data.source)
+
+        # Usar país detectado si frontend no envió
+        country = waitlist_data.country or geo_data.get("country")
+        city = geo_data.get("city")
+
+        logger.info(f"Tracking: device={device_type}, city={city}, country={country}, traffic={traffic_source}, ip={client_ip}")
+
+        # ========================================
+        # CREAR O ACTUALIZAR REGISTRO
+        # ========================================
+
+        # Crear o incrementar contador con datos de tracking
+        waitlist, is_new = WaitlistService.create_or_increment(
+            db=db,
+            waitlist_data=waitlist_data,
+            # Pasar datos de tracking
+            device_type=device_type,
+            city=city,
+            traffic_source=traffic_source,
+            user_agent=user_agent[:500] if user_agent else None,  # Limitar a 500 chars
+            ip_address=client_ip
+        )
 
         # Log del resultado
         if is_new:
-            logger.info(f"New registration: {waitlist.email} | count=1")
+            logger.info(f"New registration: {waitlist.email} | count=1 | device={device_type} | city={city}")
         else:
             logger.info(f"Duplicate registration: {waitlist.email} | count={waitlist.registration_count}")
 
@@ -74,6 +115,11 @@ async def register_waitlist(
                 "product_of_interest": waitlist.product_of_interest,
                 "registration_count": waitlist.registration_count,
                 "is_new_registration": is_new,
+                # Tracking data (opcional en respuesta, frontend puede ignorar)
+                "device_type": waitlist.device_type,
+                "city": waitlist.city,
+                "country": waitlist.country,
+                "traffic_source": waitlist.traffic_source,
                 "created_at": waitlist.created_at.isoformat() if waitlist.created_at else None,
                 "updated_at": waitlist.updated_at.isoformat() if waitlist.updated_at else None
             }

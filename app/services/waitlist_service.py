@@ -3,6 +3,7 @@ Lógica de negocio para la waitlist
 Separa la lógica de los endpoints para mejor testabilidad
 """
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.models.waitlist import Waitlist, UserTypeEnum
 from app.schemas.waitlist import WaitlistCreate
@@ -17,9 +18,27 @@ class WaitlistService:
         return db.query(Waitlist).filter(Waitlist.email == email).first()
 
     @staticmethod
-    def create_or_increment(db: Session, waitlist_data: WaitlistCreate) -> tuple[Waitlist, bool]:
+    def create_or_increment(
+        db: Session,
+        waitlist_data: WaitlistCreate,
+        # Nuevos parámetros opcionales para tracking
+        device_type: Optional[str] = None,
+        city: Optional[str] = None,
+        traffic_source: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None
+    ) -> tuple[Waitlist, bool]:
         """
         Crea un nuevo registro o incrementa el contador si ya existe
+
+        Args:
+            db: Sesión de base de datos
+            waitlist_data: Datos del formulario
+            device_type: Tipo de dispositivo (mobile/desktop/tablet)
+            city: Ciudad detectada
+            traffic_source: Origen de tráfico inferido
+            user_agent: User-Agent completo
+            ip_address: IP del cliente
 
         Returns:
             tuple: (Waitlist object, is_new: bool)
@@ -30,10 +49,23 @@ class WaitlistService:
         existing = WaitlistService.get_by_email(db, waitlist_data.email)
 
         if existing:
-            # Email duplicado: incrementar contador
+            # Email duplicado: incrementar contador y actualizar datos
             existing.registration_count += 1
             existing.source = waitlist_data.source or existing.source
             existing.country = waitlist_data.country or existing.country
+
+            # Actualizar tracking avanzado (si viene info nueva)
+            if device_type:
+                existing.device_type = device_type
+            if city:
+                existing.city = city
+            if traffic_source:
+                existing.traffic_source = traffic_source
+            if user_agent:
+                existing.user_agent = user_agent
+            if ip_address:
+                existing.ip_address = ip_address
+
             db.commit()
             db.refresh(existing)
             return existing, False
@@ -45,7 +77,13 @@ class WaitlistService:
             product_of_interest=waitlist_data.product_of_interest,
             registration_count=1,
             source=waitlist_data.source,
-            country=waitlist_data.country
+            country=waitlist_data.country,
+            # Tracking avanzado
+            device_type=device_type,
+            city=city,
+            traffic_source=traffic_source,
+            user_agent=user_agent,
+            ip_address=ip_address
         )
         db.add(new_waitlist)
         db.commit()

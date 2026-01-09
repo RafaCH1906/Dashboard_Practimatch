@@ -23,6 +23,12 @@ class WaitlistItemAdmin(BaseModel):
     registration_count: int
     source: Optional[str] = None
     country: Optional[str] = None
+    # Nuevos campos de tracking
+    city: Optional[str] = None
+    device_type: Optional[str] = None
+    traffic_source: Optional[str] = None
+    user_agent: Optional[str] = None
+    ip_address: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -90,6 +96,11 @@ class MetricsResponse(BaseModel):
     by_user_type: List[MetricsByCategory] = Field(..., description="Registros por tipo de usuario")
     by_source: List[MetricsByCategory] = Field(..., description="Registros por fuente")
     by_country: List[MetricsByCategory] = Field(..., description="Registros por país")
+
+    # Nuevas métricas de tracking
+    by_city: List[MetricsByCategory] = Field(..., description="Top 10 ciudades")
+    by_device: List[MetricsByCategory] = Field(..., description="Registros por dispositivo")
+    by_traffic_source: List[MetricsByCategory] = Field(..., description="Top 10 fuentes de tráfico")
 
     top_emails: List[TopEmail] = Field(..., description="Top 10 emails con más intentos")
     latest_by_type: List[LatestByType] = Field(..., description="Último registro por tipo")

@@ -37,6 +37,13 @@ class Waitlist(Base):
     source = Column(String(100), nullable=True)  # Instagram, Facebook, TikTok, Direct
     country = Column(String(100), nullable=True)  # Opcional desde frontend
 
+    # Tracking avanzado (inferido desde backend)
+    city = Column(String(100), nullable=True)  # Ciudad detectada desde IP
+    device_type = Column(String(20), nullable=True)  # mobile | desktop | tablet
+    traffic_source = Column(String(100), nullable=True)  # Origen inferido desde Referer
+    user_agent = Column(String(500), nullable=True)  # User-Agent completo (para debugging)
+    ip_address = Column(String(45), nullable=True)  # IPv4 o IPv6
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -46,6 +53,9 @@ class Waitlist(Base):
         Index('idx_waitlist_filters', 'user_type', 'created_at'),
         Index('idx_waitlist_source', 'source'),
         Index('idx_waitlist_country', 'country'),
+        Index('idx_waitlist_city', 'city'),
+        Index('idx_waitlist_device', 'device_type'),
+        Index('idx_waitlist_traffic', 'traffic_source'),
     )
 
     def __repr__(self):
