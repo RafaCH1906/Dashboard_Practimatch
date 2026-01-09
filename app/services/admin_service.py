@@ -116,12 +116,16 @@ class AdminService:
         ]
     @staticmethod
     def get_metrics_by_country(db: Session) -> List[MetricsByCategory]:
-        """Obtiene cantidad de registros por país"""
+        """
+        Obtiene cantidad de registros por país (Top 10)
+        Solo incluye registros con país conocido, excluye NULL
+        """
         results = (
             db.query(
-                func.coalesce(Waitlist.country, "Unknown").label("category"),
+                Waitlist.country.label("category"),
                 func.count(Waitlist.id).label("count")
             )
+            .filter(Waitlist.country.isnot(None))  # Excluir NULL de métricas
             .group_by("category")
             .order_by(desc("count"))
             .limit(10)  # Top 10 países
@@ -190,12 +194,16 @@ class AdminService:
 
     @staticmethod
     def get_metrics_by_city(db: Session, limit: int = 10) -> List[MetricsByCategory]:
-        """Obtiene cantidad de registros por ciudad (Top 10)"""
+        """
+        Obtiene cantidad de registros por ciudad (Top 10)
+        Solo incluye registros con ciudad conocida, excluye NULL
+        """
         results = (
             db.query(
-                func.coalesce(Waitlist.city, "Unknown").label("category"),
+                Waitlist.city.label("category"),
                 func.count(Waitlist.id).label("count")
             )
+            .filter(Waitlist.city.isnot(None))  # Excluir NULL de métricas
             .group_by("category")
             .order_by(desc("count"))
             .limit(limit)

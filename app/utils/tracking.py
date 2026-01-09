@@ -115,10 +115,28 @@ class GeoLocationService:
                         logger.warning(f"IP geolocation error: {data.get('reason')}")
                         return {"country": None, "city": None}
 
+                    # Obtener country y city desde la respuesta
                     country = data.get("country_code")  # ISO code: MX, US, etc.
                     city = data.get("city")
 
-                    logger.info(f"Geolocation success: {ip} -> {city}, {country}")
+                    # Limpiar city: convertir empty string, whitespace o None a None
+                    # NO guardar strings como "Unknown City" en BD
+                    if city:
+                        city = city.strip()
+                        if not city:  # Si después de strip está vacío
+                            city = None
+                    else:
+                        city = None
+
+                    # Limpiar country de la misma manera
+                    if country:
+                        country = country.strip()
+                        if not country:
+                            country = None
+                    else:
+                        country = None
+
+                    logger.info(f"Geolocation success: {ip} -> city={city}, country={country}")
                     return {"country": country, "city": city}
                 else:
                     logger.warning(f"Geolocation API returned {response.status_code}")
