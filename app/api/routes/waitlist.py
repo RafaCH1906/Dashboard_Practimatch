@@ -68,15 +68,28 @@ async def register_waitlist(
         client_ip = GeoLocationService.get_client_ip(request)
         geo_data = await GeoLocationService.get_location(client_ip) if client_ip else {"country": None, "city": None}
 
-        # 3. Detectar origen de tráfico
+        # 3. Detectar origen de tráfico CON LÓGICA DE PRIORIDAD
+        # Prioridad: traffic_source_explicit > Referer detectado > "direct"
         referer = request.headers.get("Referer") or request.headers.get("Referrer")
-        traffic_source = TrafficSourceDetector.detect(referer, waitlist_data.source)
+        traffic_source_detected = TrafficSourceDetector.detect(referer, waitlist_data.source)
+
+        # Aplicar lógica de prioridad
+        if waitlist_data.traffic_source_explicit:
+            # Frontend envió explícitamente la fuente
+            traffic_source_final = waitlist_data.traffic_source_explicit.value
+            traffic_source_type = "explicit"
+            logger.info(f"Using explicit traffic source: {traffic_source_final}")
+        else:
+            # Usar detección automática
+            traffic_source_final = traffic_source_detected
+            traffic_source_type = "detected"
+            logger.info(f"Using detected traffic source: {traffic_source_final}")
 
         # Usar país detectado si frontend no envió
         country = waitlist_data.country or geo_data.get("country")
         city = geo_data.get("city")
 
-        logger.info(f"Tracking: device={device_type}, city={city}, country={country}, traffic={traffic_source}, ip={client_ip}")
+        logger.info(f"Tracking: device={device_type}, city={city}, country={country}, traffic={traffic_source_final} ({traffic_source_type}), ip={client_ip}")
 
         # ========================================
         # CREAR O ACTUALIZAR REGISTRO
@@ -89,7 +102,8 @@ async def register_waitlist(
             # Pasar datos de tracking
             device_type=device_type,
             city=city,
-            traffic_source=traffic_source,
+            traffic_source=traffic_source_final,
+            traffic_source_type=traffic_source_type,
             user_agent=user_agent[:500] if user_agent else None,  # Limitar a 500 chars
             ip_address=client_ip
         )

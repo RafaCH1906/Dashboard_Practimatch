@@ -40,7 +40,8 @@ class Waitlist(Base):
     # Tracking avanzado (inferido desde backend)
     city = Column(String(100), nullable=True)  # Ciudad detectada desde IP
     device_type = Column(String(20), nullable=True)  # mobile | desktop | tablet
-    traffic_source = Column(String(100), nullable=True)  # Origen inferido desde Referer
+    traffic_source = Column(String(100), nullable=True)  # Origen inferido desde Referer O explícito desde frontend
+    traffic_source_type = Column(String(20), nullable=True)  # "explicit" | "detected" (indica el origen del traffic_source)
     user_agent = Column(String(500), nullable=True)  # User-Agent completo (para debugging)
     ip_address = Column(String(45), nullable=True)  # IPv4 o IPv6
 
@@ -56,6 +57,7 @@ class Waitlist(Base):
         Index('idx_waitlist_city', 'city'),
         Index('idx_waitlist_device', 'device_type'),
         Index('idx_waitlist_traffic', 'traffic_source'),
+        Index('idx_waitlist_traffic_type', 'traffic_source_type'),
     )
 
     def __repr__(self):

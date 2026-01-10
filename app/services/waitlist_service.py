@@ -25,6 +25,7 @@ class WaitlistService:
         device_type: Optional[str] = None,
         city: Optional[str] = None,
         traffic_source: Optional[str] = None,
+        traffic_source_type: Optional[str] = None,  # "explicit" | "detected"
         user_agent: Optional[str] = None,
         ip_address: Optional[str] = None
     ) -> tuple[Waitlist, bool]:
@@ -36,7 +37,8 @@ class WaitlistService:
             waitlist_data: Datos del formulario
             device_type: Tipo de dispositivo (mobile/desktop/tablet)
             city: Ciudad detectada
-            traffic_source: Origen de tráfico inferido
+            traffic_source: Origen de tráfico (final, ya con prioridad aplicada)
+            traffic_source_type: "explicit" si viene de frontend, "detected" si es automático
             user_agent: User-Agent completo
             ip_address: IP del cliente
 
@@ -61,6 +63,8 @@ class WaitlistService:
                 existing.city = city
             if traffic_source:
                 existing.traffic_source = traffic_source
+            if traffic_source_type:
+                existing.traffic_source_type = traffic_source_type
             if user_agent:
                 existing.user_agent = user_agent
             if ip_address:
@@ -82,6 +86,7 @@ class WaitlistService:
             device_type=device_type,
             city=city,
             traffic_source=traffic_source,
+            traffic_source_type=traffic_source_type,
             user_agent=user_agent,
             ip_address=ip_address
         )

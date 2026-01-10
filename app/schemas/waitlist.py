@@ -16,6 +16,17 @@ class UserType(str, Enum):
     UNIVERSITY = "university"
 
 
+class TrafficSourceExplicit(str, Enum):
+    """Fuentes de tráfico explícitas permitidas desde frontend"""
+    INSTAGRAM = "instagram"
+    FACEBOOK = "facebook"
+    TIKTOK = "tiktok"
+    LINKEDIN = "linkedin"
+    GOOGLE = "google"
+    WHATSAPP = "whatsapp"
+    OTHER = "other"
+
+
 class WaitlistCreate(BaseModel):
     """Schema para crear registro en waitlist"""
     email: EmailStr = Field(..., description="Email del usuario")
@@ -30,8 +41,12 @@ class WaitlistCreate(BaseModel):
     source: Optional[str] = Field(
         None,
         max_length=100,
-        description="Origen del tráfico",
+        description="Origen del tráfico (legacy, usar traffic_source_explicit)",
         pattern="^[a-zA-Z0-9 _-]+$"  # Solo alfanumérico
+    )
+    traffic_source_explicit: Optional[TrafficSourceExplicit] = Field(
+        None,
+        description="Fuente de tráfico explícita desde frontend (prioridad sobre detección automática)"
     )
     country: Optional[str] = Field(
         None,
@@ -46,7 +61,7 @@ class WaitlistCreate(BaseModel):
                 "email": "user@example.com",
                 "user_type": "student",
                 "product_of_interest": "PractiMatch Platform",
-                "source": "Instagram",
+                "traffic_source_explicit": "instagram",  # Nuevo campo opcional
                 "country": "Mexico"
             }
         }

@@ -140,6 +140,9 @@ async def get_metrics(
         by_city = AdminService.get_metrics_by_city(db, limit=10)
         by_device = AdminService.get_metrics_by_device(db)
         by_traffic_source = AdminService.get_metrics_by_traffic_source(db, limit=10)
+        by_traffic_source_type = AdminService.get_metrics_by_traffic_source_type(db)
+        top_explicit_sources = AdminService.get_top_explicit_sources(db, limit=10)
+        top_detected_sources = AdminService.get_top_detected_sources(db, limit=10)
 
         top_emails = AdminService.get_top_emails(db, limit=10)
         latest_by_type = AdminService.get_latest_by_type(db)
@@ -154,6 +157,9 @@ async def get_metrics(
             by_city=by_city,
             by_device=by_device,
             by_traffic_source=by_traffic_source,
+            by_traffic_source_type=by_traffic_source_type,
+            top_explicit_sources=top_explicit_sources,
+            top_detected_sources=top_detected_sources,
             top_emails=top_emails,
             latest_by_type=latest_by_type
         )

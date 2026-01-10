@@ -230,7 +230,6 @@ class AdminService:
             MetricsByCategory(category=r.category, count=r.count)
             for r in results
         ]
-
     @staticmethod
     def get_metrics_by_traffic_source(db: Session, limit: int = 10) -> List[MetricsByCategory]:
         """Obtiene cantidad de registros por fuente de tráfico (Top 10)"""
@@ -249,3 +248,66 @@ class AdminService:
             for r in results
         ]
 
+    @staticmethod
+    def get_metrics_by_traffic_source_type(db: Session) -> List[MetricsByCategory]:
+        """
+        Obtiene cantidad de registros por tipo de fuente de tráfico
+        Diferencia entre explícito (frontend) y detectado (backend)
+        """
+        results = (
+            db.query(
+                func.coalesce(Waitlist.traffic_source_type, "unknown").label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .group_by("category")
+            .order_by(desc("count"))
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]
+
+    @staticmethod
+    def get_top_explicit_sources(db: Session, limit: int = 10) -> List[MetricsByCategory]:
+        """
+        Obtiene top fuentes de tráfico explícitas (enviadas por frontend)
+        Solo incluye registros donde traffic_source_type = 'explicit'
+        """
+        results = (
+            db.query(
+                Waitlist.traffic_source.label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .filter(Waitlist.traffic_source_type == "explicit")
+            .group_by("category")
+            .order_by(desc("count"))
+            .limit(limit)
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]
+
+    @staticmethod
+    def get_top_detected_sources(db: Session, limit: int = 10) -> List[MetricsByCategory]:
+        """
+        Obtiene top fuentes de tráfico detectadas (por backend)
+        Solo incluye registros donde traffic_source_type = 'detected'
+        """
+        results = (
+            db.query(
+                Waitlist.traffic_source.label("category"),
+                func.count(Waitlist.id).label("count")
+            )
+            .filter(Waitlist.traffic_source_type == "detected")
+            .group_by("category")
+            .order_by(desc("count"))
+            .limit(limit)
+            .all()
+        )
+        return [
+            MetricsByCategory(category=r.category, count=r.count)
+            for r in results
+        ]

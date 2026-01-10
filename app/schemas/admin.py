@@ -27,6 +27,7 @@ class WaitlistItemAdmin(BaseModel):
     city: Optional[str] = None
     device_type: Optional[str] = None
     traffic_source: Optional[str] = None
+    traffic_source_type: Optional[str] = None  # "explicit" | "detected"
     user_agent: Optional[str] = None
     ip_address: Optional[str] = None
     created_at: datetime
@@ -101,6 +102,9 @@ class MetricsResponse(BaseModel):
     by_city: List[MetricsByCategory] = Field(..., description="Top 10 ciudades")
     by_device: List[MetricsByCategory] = Field(..., description="Registros por dispositivo")
     by_traffic_source: List[MetricsByCategory] = Field(..., description="Top 10 fuentes de tráfico")
+    by_traffic_source_type: List[MetricsByCategory] = Field(..., description="Diferenciación explícito vs detectado")
+    top_explicit_sources: List[MetricsByCategory] = Field(..., description="Top 10 fuentes explícitas (frontend)")
+    top_detected_sources: List[MetricsByCategory] = Field(..., description="Top 10 fuentes detectadas (backend)")
 
     top_emails: List[TopEmail] = Field(..., description="Top 10 emails con más intentos")
     latest_by_type: List[LatestByType] = Field(..., description="Último registro por tipo")
